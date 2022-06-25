@@ -16,7 +16,6 @@ import {
 } from "@mui/material";
 import { useRouter } from "next/router";
 import { useState } from "react";
-import toast, { Toaster } from "react-hot-toast";
 
 const Home: NextPage = () => {
   const router = useRouter();
@@ -40,7 +39,7 @@ const Home: NextPage = () => {
     setLinkCreated(true);
   };
 
-  const CopyButton = ({ text }) => {
+  const CopyButton = ({ text }: any) => {
     return (
       <Button
         variant="contained"
