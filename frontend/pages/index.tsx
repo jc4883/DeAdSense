@@ -17,8 +17,6 @@ const Home: NextPage = () => {
     setAddress("0x2384927496591705");
   };
 
-  
-
 
   const handleSignIn = async () => {
     // console.log("16 handleSignIn");
@@ -75,7 +73,7 @@ const Home: NextPage = () => {
       }
 
       setConnector(null);
-      setAddress(null);
+      setAddress("");
     });
 
     if (connector.connected) {

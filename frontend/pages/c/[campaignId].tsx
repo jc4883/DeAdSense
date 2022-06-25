@@ -15,11 +15,14 @@ import {
   Snackbar,
 } from "@mui/material";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import WalletConnect from "@walletconnect/client";
+import QRCodeModal from "@walletconnect/qrcode-modal";
 
 const Home: NextPage = () => {
   const router = useRouter();
-  const [address, setAddress] = useState<null | string>(null);
+  const [connector, setConnector] = useState<WalletConnect | null>(null);
+  const [address, setAddress] = useState<null | string>("");
   const campaignId = router.query.campaignId;
   const [link, setLink] = useState<string>("deAdSense.io/c/234");
   const [endDate, setEndDate] = useState<string | number>("");
@@ -31,9 +34,93 @@ const Home: NextPage = () => {
   const referData: any = [{ id: "0x23o94", impressions: 50 }];
   const [linkCreated, setLinkCreated] = useState<boolean>(false);
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
-  const handleWalletSignIn = () => {
-    setAddress("0x2384927496591705");
-  };
+
+  const handleSignIn = async () => {
+    // console.log("16 handleSignIn");
+
+    // bridge url
+    const bridge = "https://bridge.walletconnect.org";
+
+    // create new connector
+    const connector = new WalletConnect({ bridge, qrcodeModal: QRCodeModal });
+    setConnector(connector);
+
+    if (!connector.connected) {
+      // console.log("26 creating session");
+      await connector.createSession();
+    }
+  }
+
+  useEffect(() => {
+    // console.log("27 useEffect connector");
+    if (!connector) {
+      // console.log("29 no connector!!");
+      return;
+    }
+    // console.log("32");
+
+    // subscribe to connector events
+    connector.on("session_update", async (error, payload) => {
+      console.log(`connector.on("session_update")`);
+
+      if (error) {
+        throw error;
+      }
+
+      const { chainId, accounts } = payload.params[0];
+      setAddress(accounts[0]);
+    });
+
+    connector.on("connect", (error, payload) => {
+      console.log(`connector.on("connect")`);
+
+      if (error) {
+        throw error;
+      }
+
+      const { chainId, accounts } = payload.params[0];
+      setAddress(accounts[0]);
+    });
+
+    connector.on("disconnect", (error, payload) => {
+      console.log(`connector.on("disconnect")`);
+
+      if (error) {
+        throw error;
+      }
+
+      setConnector(null);
+      setAddress("");
+    });
+
+    if (connector.connected) {
+      // console.log("69 connector.connected");
+      console.log(`${connector.connected}, ${connector._connected}`);
+
+      const { chainId, accounts } = connector;
+      const address = accounts[0];
+      setAddress(accounts[0]);
+    }
+
+    // console.log("77");
+  }, [connector])
+
+  const handleSignOut = () => {
+    // console.log("81");
+    if (connector) {
+      // console.log("83");
+      connector.killSession();
+    }
+    // console.log("86");
+    setAddress("");
+    setEndDate("");
+    setAmount("");
+    setImpressions("");
+    setLinkCreated(false);
+    setSnackbarOpen(false);
+  }
+
+
   const handleCreateLink = () => {
     setLink("deAdSense.io/c/234/5882342");
     setLinkCreated(true);
@@ -106,11 +193,11 @@ const Home: NextPage = () => {
             style={{ paddingTop: 20 }}
             justifyContent="center"
           >
-            {address === null ? (
+            {address === "" ? (
               <Button
                 variant="contained"
                 onClick={() => {
-                  handleWalletSignIn();
+                  handleSignIn();
                 }}
               >
                 Connect Wallet
@@ -127,7 +214,9 @@ const Home: NextPage = () => {
                   <Chip label={address}></Chip>
                 </Grid>
                 <Grid item>
-                  <Button>Sign out</Button>
+                  <Button onClick={() => handleSignOut()}>
+                    Sign out
+                  </Button>
                 </Grid>
               </Grid>
             )}
@@ -221,6 +310,7 @@ const Home: NextPage = () => {
               <Button
                 variant="contained"
                 fullWidth
+                disabled={address === ""}
                 onClick={() => {
                   handleCreateLink();
                 }}
