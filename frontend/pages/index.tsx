@@ -1,7 +1,17 @@
 import type { NextPage } from "next";
 import Head from "next/head";
-import { Grid, Typography, Button, Chip, TextField } from "@mui/material";
+import {
+  Grid,
+  Typography,
+  Button,
+  Chip,
+  TextField,
+  MenuItem,
+  InputAdornment,
+} from "@mui/material";
 import { useRouter } from "next/router";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { useState, useEffect } from "react";
 import WalletConnect from "@walletconnect/client";
 import QRCodeModal from "@walletconnect/qrcode-modal";
@@ -17,7 +27,6 @@ const Home: NextPage = () => {
     setAddress("0x2384927496591705");
   };
 
-
   const handleSignIn = async () => {
     // console.log("16 handleSignIn");
 
@@ -32,7 +41,7 @@ const Home: NextPage = () => {
       // console.log("26 creating session");
       await connector.createSession();
     }
-  }
+  };
 
   useEffect(() => {
     // console.log("27 useEffect connector");
@@ -86,7 +95,7 @@ const Home: NextPage = () => {
     }
 
     // console.log("77");
-  }, [connector])
+  }, [connector]);
 
   const handleSignOut = () => {
     // console.log("81");
@@ -96,7 +105,7 @@ const Home: NextPage = () => {
     }
     // console.log("86");
     setAddress("");
-  }
+  };
 
   return (
     <div
@@ -141,10 +150,7 @@ const Home: NextPage = () => {
             justifyContent="center"
           >
             {address === "" ? (
-              <Button
-                variant="contained"
-                onClick={() => handleSignIn() }
-              >
+              <Button variant="contained" onClick={() => handleSignIn()}>
                 Connect Wallet
               </Button>
             ) : (
@@ -159,11 +165,7 @@ const Home: NextPage = () => {
                   <Chip label={address}></Chip>
                 </Grid>
                 <Grid item>
-                  <Button
-                    onClick={() => handleSignOut()}
-                  >
-                    Sign out
-                  </Button>
+                  <Button onClick={() => handleSignOut()}>Sign out</Button>
                 </Grid>
               </Grid>
             )}
@@ -179,7 +181,7 @@ const Home: NextPage = () => {
             >
               <Grid item xs={12} md={7}>
                 <TextField
-                  label="Link"
+                  label="Link to advertise"
                   value={link}
                   fullWidth
                   onChange={(e) => {
@@ -195,7 +197,12 @@ const Home: NextPage = () => {
                   onChange={(e) => {
                     setDuration(e.target.value);
                   }}
-                ></TextField>
+                  select
+                >
+                  <MenuItem key="1 week" value="1 week">
+                    1 Week
+                  </MenuItem>
+                </TextField>
               </Grid>
               <Grid item xs={12} md={7}>
                 <TextField
@@ -204,6 +211,11 @@ const Home: NextPage = () => {
                   fullWidth
                   onChange={(e) => {
                     setAmount(e.target.value);
+                  }}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">USDC</InputAdornment>
+                    ),
                   }}
                 ></TextField>
               </Grid>
