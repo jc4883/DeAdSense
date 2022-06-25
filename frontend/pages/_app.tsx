@@ -2,7 +2,7 @@ import "../styles/globals.css";
 import type { AppProps } from "next/app";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 
-let theme = createTheme({
+export const theme = createTheme({
   palette: {
     primary: {
       light: "#C8C2FF",
