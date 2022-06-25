@@ -16,6 +16,7 @@
 **/build
 **/artifacts
 **/cache
+**/typechain-types
 
 # misc
 */.DS_Store
