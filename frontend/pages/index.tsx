@@ -1,8 +1,18 @@
 import type { NextPage } from "next";
 import Head from "next/head";
-import { Grid, Typography, Button, Chip, TextField } from "@mui/material";
+import {
+  Grid,
+  Typography,
+  Button,
+  Chip,
+  TextField,
+  MenuItem,
+  InputAdornment,
+} from "@mui/material";
 import { useRouter } from "next/router";
 import { useState } from "react";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 
 const Home: NextPage = () => {
   const router = useRouter();
@@ -92,7 +102,7 @@ const Home: NextPage = () => {
             >
               <Grid item xs={12} md={7}>
                 <TextField
-                  label="Link"
+                  label="Link to advertise"
                   value={link}
                   fullWidth
                   onChange={(e) => {
@@ -108,7 +118,12 @@ const Home: NextPage = () => {
                   onChange={(e) => {
                     setDuration(e.target.value);
                   }}
-                ></TextField>
+                  select
+                >
+                  <MenuItem key="1 week" value="1 week">
+                    1 Week
+                  </MenuItem>
+                </TextField>
               </Grid>
               <Grid item xs={12} md={7}>
                 <TextField
@@ -117,6 +132,11 @@ const Home: NextPage = () => {
                   fullWidth
                   onChange={(e) => {
                     setAmount(e.target.value);
+                  }}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">USDC</InputAdornment>
+                    ),
                   }}
                 ></TextField>
               </Grid>

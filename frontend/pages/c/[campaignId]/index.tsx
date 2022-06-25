@@ -16,14 +16,15 @@ import {
 } from "@mui/material";
 import { useRouter } from "next/router";
 import { useState } from "react";
+import dayjs from "dayjs";
 
 const Home: NextPage = () => {
   const router = useRouter();
   const [address, setAddress] = useState<null | string>(null);
   const campaignId = router.query.campaignId;
   const [link, setLink] = useState<string>("deAdSense.io/c/234");
-  const [endDate, setEndDate] = useState<string | number>("");
-  const [amount, setAmount] = useState<string | number>("");
+  const [endDate, setEndDate] = useState<string | number>("1656197306080");
+  const [amount, setAmount] = useState<string | number>("0");
   const [impressions, setImpressions] = useState<string | number>("");
   const [ownerAddress, setOwnerAddress] = useState<null | string>(
     "0x2384927496591705"
@@ -37,6 +38,11 @@ const Home: NextPage = () => {
   const handleCreateLink = () => {
     setLink("deAdSense.io/c/234/5882342");
     setLinkCreated(true);
+  };
+
+  const getFormattedTime = (date: any) => {
+    const output: string = dayjs(Number(date)).format("MM/DD/YYYY");
+    return output;
   };
 
   const CopyButton = ({ text }: any) => {
@@ -169,7 +175,9 @@ const Home: NextPage = () => {
                   <Typography align="left">Ends at</Typography>
                 </Grid>
                 <Grid item xs={8}>
-                  <Typography align="right">{endDate}</Typography>
+                  <Typography align="right">
+                    {getFormattedTime(endDate)}
+                  </Typography>
                 </Grid>
               </Grid>
               <Grid container item>
@@ -177,7 +185,7 @@ const Home: NextPage = () => {
                   <Typography align="left">Amount deposited</Typography>
                 </Grid>
                 <Grid item xs={8}>
-                  <Typography align="right">{amount}</Typography>
+                  <Typography align="right">{amount} USDC</Typography>
                 </Grid>
               </Grid>
               <Grid container item>
