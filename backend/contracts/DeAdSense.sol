@@ -47,7 +47,8 @@ contract DeAdSense is Ownable, SuperAppBase {
             SuperAppDefinitions.APP_LEVEL_FINAL |
             SuperAppDefinitions.BEFORE_AGREEMENT_TERMINATED_NOOP |
             SuperAppDefinitions.AFTER_AGREEMENT_TERMINATED_NOOP |
-            SuperAppDefinitions.AFTER_AGREEMENT_UPDATED_NOOP;
+            SuperAppDefinitions.AFTER_AGREEMENT_UPDATED_NOOP | 
+            SuperAppDefinitions.BEFORE_AGREEMENT_UPDATED_NOOP;
 
       _host.registerAppWithKey(configWord, "");
 
@@ -82,40 +83,6 @@ contract DeAdSense is Ownable, SuperAppBase {
    function getReffererUnits(address refferer) external view returns (uint){
       ( , , uint256 currentAmount ,) = idaV1.getSubscription(cashToken, address(this), INDEX_ID, refferer);
       return currentAmount;
-   }
-
-   function beforeAgreementCreated(
-      ISuperToken superToken,
-      address agreementClass,
-      bytes32 /* agreementId */,
-      bytes calldata /*agreementData*/,
-      bytes calldata /*ctx*/
-   )
-      external view override
-      onlyHost
-      onlyIDA(agreementClass)
-      returns (bytes memory data)
-        
-   {
-      require(superToken == cashToken, "DRT: Unsupported cash token");
-      return new bytes(0);
-   }
-
-   function _isIDAv1(address agreementClass) private view returns (bool) {
-      return ISuperAgreement(agreementClass).agreementType() == IDAV1_ID;
-   }
-
-   modifier onlyHost() {
-      require(
-         msg.sender == address(idaV1.host),
-         "Only host can call callback"
-      );
-      _;
-   }
-
-   modifier onlyIDA(address agreementClass) {
-      require(_isIDAv1(agreementClass), "Only IDAv1 supported");
-      _;
    }
 
    modifier isActive() {
