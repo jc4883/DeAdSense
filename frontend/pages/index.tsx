@@ -2,7 +2,7 @@ import type { NextPage } from "next";
 import Head from "next/head";
 import { Grid, Typography, Button, Chip } from "@mui/material";
 import { useRouter } from "next/router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import WalletConnect from "@walletconnect/client";
 import QRCodeModal from "@walletconnect/qrcode-modal";
 
@@ -11,32 +11,32 @@ const Home: NextPage = () => {
   const [connector, setConnector] = useState<WalletConnect | null>(null);
   const [address, setAddress] = useState<null | string>(null);
 
-  const connect = async () => {
+
+  const handleSignIn = async () => {
+    // console.log("16 handleSignIn");
+
     // bridge url
     const bridge = "https://bridge.walletconnect.org";
 
     // create new connector
     const connector = new WalletConnect({ bridge, qrcodeModal: QRCodeModal });
-
-    // check if already connected
-    if (!connector._connected) {
-      // create new session
-      await connector.createSession();
-    }
-
     setConnector(connector);
 
+    if (!connector.connected) {
+      // console.log("26 creating session");
+      await connector.createSession();
+    }
+  }
 
-    // subscribe to events
-    await subscribeToEvents();
-  };
-
-  const subscribeToEvents = async () => {
-    console.log("34 subscribeToEvents");
+  useEffect(() => {
+    // console.log("27 useEffect connector");
     if (!connector) {
+      // console.log("29 no connector!!");
       return;
     }
+    // console.log("32");
 
+    // subscribe to connector events
     connector.on("session_update", async (error, payload) => {
       console.log(`connector.on("session_update")`);
 
@@ -44,9 +44,8 @@ const Home: NextPage = () => {
         throw error;
       }
 
-      const { accounts } = payload.params[0];
+      const { chainId, accounts } = payload.params[0];
       setAddress(accounts[0]);
-      
     });
 
     connector.on("connect", (error, payload) => {
@@ -56,7 +55,7 @@ const Home: NextPage = () => {
         throw error;
       }
 
-      const { accounts } = payload.params[0];
+      const { chainId, accounts } = payload.params[0];
       setAddress(accounts[0]);
     });
 
@@ -67,30 +66,29 @@ const Home: NextPage = () => {
         throw error;
       }
 
+      setConnector(null);
       setAddress(null);
     });
 
     if (connector.connected) {
-      console.log("71 if connector.connected")
-      setAddress(connector.accounts[0]);
-      // const { chainId, accounts } = connector;
-      // const address = accounts[0];
-      // this.setState({
-      //   connected: true,
-      //   chainId,
-      //   accounts,
-      //   address,
-      // });
-      // this.onSessionUpdate(accounts, chainId);
+      // console.log("69 connector.connected");
+      console.log(`${connector.connected}, ${connector._connected}`);
+
+      const { chainId, accounts } = connector;
+      const address = accounts[0];
+      setAddress(accounts[0]);
     }
 
-    setConnector(connector);
-  };
+    // console.log("77");
+  }, [connector])
 
   const handleSignOut = () => {
+    // console.log("81");
     if (connector) {
+      // console.log("83");
       connector.killSession();
     }
+    // console.log("86");
     setAddress(null);
   }
 
@@ -139,9 +137,7 @@ const Home: NextPage = () => {
             {address === null ? (
               <Button
                 variant="contained"
-                onClick={() => {
-                  connect();
-                }}
+                onClick={() => handleSignIn() }
               >
                 Connect Wallet
               </Button>
