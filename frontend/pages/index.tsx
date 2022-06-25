@@ -3,13 +3,97 @@ import Head from "next/head";
 import { Grid, Typography, Button, Chip } from "@mui/material";
 import { useRouter } from "next/router";
 import { useState } from "react";
+import WalletConnect from "@walletconnect/client";
+import QRCodeModal from "@walletconnect/qrcode-modal";
 
 const Home: NextPage = () => {
   const router = useRouter();
+  const [connector, setConnector] = useState<WalletConnect | null>(null);
   const [address, setAddress] = useState<null | string>(null);
-  const handleWalletSignIn = () => {
-    setAddress("0x2384927496591705");
+
+  const connect = async () => {
+    // bridge url
+    const bridge = "https://bridge.walletconnect.org";
+
+    // create new connector
+    const connector = new WalletConnect({ bridge, qrcodeModal: QRCodeModal });
+
+    // check if already connected
+    if (!connector._connected) {
+      // create new session
+      await connector.createSession();
+    }
+
+    setConnector(connector);
+
+
+    // subscribe to events
+    await subscribeToEvents();
   };
+
+  const subscribeToEvents = async () => {
+    console.log("34 subscribeToEvents");
+    if (!connector) {
+      return;
+    }
+
+    connector.on("session_update", async (error, payload) => {
+      console.log(`connector.on("session_update")`);
+
+      if (error) {
+        throw error;
+      }
+
+      const { accounts } = payload.params[0];
+      setAddress(accounts[0]);
+      
+    });
+
+    connector.on("connect", (error, payload) => {
+      console.log(`connector.on("connect")`);
+
+      if (error) {
+        throw error;
+      }
+
+      const { accounts } = payload.params[0];
+      setAddress(accounts[0]);
+    });
+
+    connector.on("disconnect", (error, payload) => {
+      console.log(`connector.on("disconnect")`);
+
+      if (error) {
+        throw error;
+      }
+
+      setAddress(null);
+    });
+
+    if (connector.connected) {
+      console.log("71 if connector.connected")
+      setAddress(connector.accounts[0]);
+      // const { chainId, accounts } = connector;
+      // const address = accounts[0];
+      // this.setState({
+      //   connected: true,
+      //   chainId,
+      //   accounts,
+      //   address,
+      // });
+      // this.onSessionUpdate(accounts, chainId);
+    }
+
+    setConnector(connector);
+  };
+
+  const handleSignOut = () => {
+    if (connector) {
+      connector.killSession();
+    }
+    setAddress(null);
+  }
+
   return (
     <div
       style={{
@@ -56,7 +140,7 @@ const Home: NextPage = () => {
               <Button
                 variant="contained"
                 onClick={() => {
-                  handleWalletSignIn();
+                  connect();
                 }}
               >
                 Connect Wallet
@@ -73,7 +157,11 @@ const Home: NextPage = () => {
                   <Chip label={address}></Chip>
                 </Grid>
                 <Grid item>
-                  <Button>Sign out</Button>
+                  <Button
+                    onClick={() => handleSignOut()}
+                  >
+                    Sign out
+                  </Button>
                 </Grid>
               </Grid>
             )}
