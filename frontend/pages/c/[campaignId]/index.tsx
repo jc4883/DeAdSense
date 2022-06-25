@@ -19,12 +19,16 @@ import dayjs from "dayjs";
 import { useState, useEffect } from "react";
 import WalletConnect from "@walletconnect/client";
 import QRCodeModal from "@walletconnect/qrcode-modal";
+import { getEndDate } from "../../../utils/DeAdSenseQueries";
 
 const Home: NextPage = () => {
   const router = useRouter();
   const [connector, setConnector] = useState<WalletConnect | null>(null);
   const [address, setAddress] = useState<null | string>("");
-  const campaignId = router.query.campaignId;
+  const campaignId: string =
+    router.query.campaignId !== undefined
+      ? router.query.campaignId.toString()
+      : "";
   const [link, setLink] = useState<string>("deAdSense.io/c/234");
   const [endDate, setEndDate] = useState<string | number>("1656197306080");
   const [amount, setAmount] = useState<string | number>("0");
@@ -105,6 +109,15 @@ const Home: NextPage = () => {
 
     // console.log("77");
   }, [connector]);
+
+  useEffect(() => {
+    async function fetchCampaignData() {
+      console.log("hello");
+      const fetchedEndDate = await getEndDate(campaignId);
+      console.log(fetchedEndDate);
+    }
+    if (address) fetchCampaignData();
+  }, [address]);
 
   const handleSignOut = () => {
     // console.log("81");
