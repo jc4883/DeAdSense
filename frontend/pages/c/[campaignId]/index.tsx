@@ -100,7 +100,7 @@ const Home: NextPage = () => {
 
     if (connector.connected) {
       // console.log("69 connector.connected");
-      console.log(`${connector.connected}, ${connector._connected}`);
+      console.log(`${connector.connected}, ${connector.connected}`);
 
       const { chainId, accounts } = connector;
       const address = accounts[0];
