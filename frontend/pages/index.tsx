@@ -24,8 +24,8 @@ import * as Firebase from "../clients/Firebase";
 const Home: NextPage = () => {
   useEffect(() => {
     (async () => {
-      const docs = await Firebase.getDocs("users");
-      console.log("docs", docs);
+      //const docs = await Firebase.getDocs("users");
+      //console.log("docs", docs);
     })();
   }, []);
 
