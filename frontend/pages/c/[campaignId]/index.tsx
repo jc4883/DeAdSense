@@ -61,7 +61,6 @@ const Home: NextPage = () => {
   const [isAddingFunds, setIsAddingFunds] = useState<boolean>(false);
   const [provider, setProvider] = useState<ethers.providers.Web3Provider | null>(null);
   const isCampaignOwner = ownerAddress.toLowerCase() === address.toLowerCase();
-  console.log(58, ownerAddress, address, isCampaignOwner);
 
   const handleSignIn = async () => {
 
@@ -260,10 +259,10 @@ const Home: NextPage = () => {
             distributeFunds(campaignId, provider);
           }
         }}
-        style={{ marginTop: 10, height: 60 }}
+        style={{ marginTop: 50, height: 60, marginBottom: 10 }}
       >
         <Typography variant="h4" style={{ color: "white" }}>
-          Distribute Funds
+          End Campaign
         </Typography>
       </Button>
     );
@@ -482,14 +481,14 @@ const Home: NextPage = () => {
                 </TableContainer>
                 <ZKRollupButton/>
               </Grid>
-              {isCampaignActive && (
+              {
                 <Grid container item>
-                  <Typography>
-                    Your campaign is over. Pay out your promoters!
-                  </Typography>
                   <EndCampaignButton />
+                  <Typography>
+                    End your campaign to pay your promoters!
+                  </Typography>
                 </Grid>
-              )}
+              }
             </Grid>
           )}
           {!isCampaignOwner && address && (
