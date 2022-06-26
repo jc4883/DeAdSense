@@ -18,9 +18,17 @@ import QRCodeModal from "@walletconnect/qrcode-modal";
 import { ethers  } from 'ethers';
 import WalletConnectProvider from "@walletconnect/web3-provider";
 import { createCampaign } from "../utils/buttonCallbacks";
-
+import { collection, addDoc } from "firebase/firestore";
+import * as Firebase from "../clients/Firebase";
 
 const Home: NextPage = () => {
+  useEffect(() => {
+    (async () => {
+      const docs = await Firebase.getDocs("users");
+      console.log("docs", docs);
+    })();
+  }, []);
+
   const router = useRouter();
   const [connector, setConnector] = useState<WalletConnect | null>(null);
   const [provider, setProvider] = useState<ethers.providers.Web3Provider | null>(null);
@@ -29,9 +37,6 @@ const Home: NextPage = () => {
   const [duration, setDuration] = useState<string>("");
   const [amount, setAmount] = useState<string>("");
   const [contractAddress, setContractAddress] = useState<string | null>(null);
-  const handleWalletSignIn = () => {
-    setAddress("0x2384927496591705");
-  };
 
   const handleSignIn = async () => {
     // const providerWalletConnect = new WalletConnectProvider({

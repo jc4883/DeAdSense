@@ -3,6 +3,8 @@ import Head from "next/head";
 import {
   Grid,
   Typography,
+  TextField,
+  InputAdornment,
   Button,
   Chip,
   Table,
@@ -20,10 +22,17 @@ import { useState, useEffect } from "react";
 import WalletConnect from "@walletconnect/client";
 import QRCodeModal from "@walletconnect/qrcode-modal";
 import {
+  getCampaignActive,
   getCampaignAmount,
   getEndDate,
   getOwner,
 } from "../../../utils/DeAdSenseQueries";
+import { distributeFunds, impressionRollupCallback, addFunds } from "../../../utils/buttonCallbacks";
+import { db } from "../../../clients/Firebase";
+import {
+  doc,
+  getDoc
+} from "firebase/firestore";
 
 const Home: NextPage = () => {
   const router = useRouter();
@@ -31,18 +40,23 @@ const Home: NextPage = () => {
   const [address, setAddress] = useState<null | string>("");
   const campaignId: string =
     router.query.campaignId !== undefined
-      ? router.query.campaignId.toString()
+      ? router.query.campaignId.toString().toLowerCase()
       : "";
   const [link, setLink] = useState<string>("deAdSense.io/c/234");
-  const [endDate, setEndDate] = useState<string | number>("1656197306080");
+  const [endDate, setEndDate] = useState<string | number>(dayjs().valueOf());
+  const [isCampaignActive, setIsCampaignActive] = useState<boolean>(false);
   const [amount, setAmount] = useState<string | number>("0");
   const [impressions, setImpressions] = useState<string | number>("");
   const [ownerAddress, setOwnerAddress] = useState<null | string>(
     "0x2384927496591705"
   );
-  const referData: any = [{ id: "0x23o94", impressions: 50 }];
+  const [referData, setReferData] = useState<Array<any>>([]);
   const [linkCreated, setLinkCreated] = useState<boolean>(false);
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
+  const [addingAmount, setAddingAmount] = useState<number | null>(null);
+  const [isAddingFunds, setIsAddingFunds] = useState<boolean>(false);
+  // const isCampaignOwner = ownerAddress === address;
+  const isCampaignOwner = true;
 
   const handleSignIn = async () => {
 
@@ -108,18 +122,31 @@ const Home: NextPage = () => {
 
   useEffect(() => {
     async function fetchCampaignData() {
+      const docSnap = await getDoc(doc(db, "impressionCount", campaignId));
+      if (docSnap.exists()) {
+        const docData = docSnap.data();
+        setImpressions(docData[address?.toLowerCase() ?? ""]?.toString() || "0");
+        const newReferData = [];
+        for (let [referrerId, impressions] of Object.entries(docData)) {
+          newReferData.push({id: referrerId, impressions});
+        }
+        console.log(newReferData);
+        setReferData(newReferData);
+      };
+
       try {
+        const isCompaignActive = await getCampaignActive(campaignId);
         const fetchedOwnerAddress = await getOwner(campaignId);
         const fetchedEndDate = await getEndDate(campaignId);
         const fetchedAmount = await getCampaignAmount(campaignId);
         console.log(fetchedEndDate.toUTCString());
-        // setOwnerAddress(fetchedOwnerAddress);
-        // setOwnerAddress("0x008ff63eDFCb75733859441ac8702DcC56d6E76D"); // for testing
+        setIsCampaignActive(isCampaignActive);
+        setOwnerAddress(fetchedOwnerAddress);
         setEndDate(dayjs(fetchedEndDate).valueOf());
         setAmount(Number(fetchedAmount)/10**18); // 18 = number of decimals in the token
       }
       catch (error) {
-        console.log(`error loading campaign ${campaignId}`);
+        console.log(`error loading campaign ${campaignId} from contract`);
         throw error;
       }
     }
@@ -127,6 +154,13 @@ const Home: NextPage = () => {
 
     // TODO: fetch data from aws as well
   }, [address]);
+
+  useEffect(() => {
+    if (address == null) return;
+    if (!isCampaignOwner) {
+      setLink(`deAdSense.io/c/${campaignId}/${address}`) 
+    }
+  }, [address, isCampaignOwner, campaignId])
 
   const handleSignOut = () => {
     if (connector) {
@@ -141,7 +175,7 @@ const Home: NextPage = () => {
   };
 
   const handleCreateLink = () => {
-    const link = `deAdSense.io/c/${campaignId}/${address}`;
+    const link = `deAdSense.io/c/${campaignId}`
     setLink(link);
     setLinkCreated(true);
   };
@@ -150,6 +184,24 @@ const Home: NextPage = () => {
     const output: string = dayjs(Number(date)).format("MM/DD/YYYY");
     return output;
   };
+
+  const saveImpressionsToChain = async () => {
+    const docSnap = await getDoc(doc(db, "impressionCount", campaignId));
+    if (docSnap.exists()) {
+      const docData = docSnap.data();
+      const referrerIds = [];
+      const impressionCounts = [];
+      
+      for (let [referrerId, impressions] of Object.entries(docData)) {
+        referrerIds.push(referrerId);
+        impressionCounts.push(impressions)
+      }
+      impressionRollupCallback(campaignId, referrerIds, impressionCounts, null)
+    };
+  }
+  const addAdditionalFunds = async () => {
+    addFunds(campaignId, addingAmount, null)
+  }
 
   const CopyButton = ({ text }: any) => {
     return (
@@ -166,6 +218,51 @@ const Home: NextPage = () => {
       </Button>
     );
   };
+
+  const AddFundsButton = () => {
+    return (
+      <Button
+        variant="contained"
+        color={isAddingFunds ? "primary" : "secondary"}
+        fullWidth
+        onClick={() => {
+          isAddingFunds ? setIsAddingFunds(false) :setIsAddingFunds(true)
+        }}
+      >
+        {isAddingFunds ? 'Cancel' : 'Add Funds'}
+      </Button>
+    )
+  }
+
+  const EndCampaignButton = () => {
+    return (
+      <Button
+        variant="contained"
+        color="primary"
+        fullWidth
+        onClick={() => {
+          distributeFunds(campaignId, null);
+        }}
+        style={{ marginTop: 10, height: 60 }}
+      >
+        <Typography variant="h4" style={{ color: "white" }}>
+          Distribute Funds
+        </Typography>
+      </Button>
+    );
+  };
+
+  const ZKRollupButton = () => {
+    return (
+      <Button variant="contained" color="primary">
+        <Typography style={{fontSize: 18}} onClick={saveImpressionsToChain}>
+          Save Impressions to Chain
+        </Typography>
+      </Button>
+    )
+  }
+
+  const displayLink = link.length > 25 ? `${link.slice(0, 15)}...${link.slice(-10)}` : link
 
   return (
     <div
@@ -255,7 +352,28 @@ const Home: NextPage = () => {
               </Typography>
             </Grid>
           </Grid>
-          {address && ownerAddress && ownerAddress.toLowerCase() === address.toLowerCase() && (
+          {!linkCreated && isCampaignOwner && (
+            <Grid
+              container
+              item
+              xs={12}
+              md={6}
+              justifyContent="center"
+              style={{ paddingTop: 30 }}
+            >
+              <Button
+                variant="contained"
+                fullWidth
+                disabled={address === ""}
+                onClick={() => {
+                  handleCreateLink();
+                }}
+              >
+                Generate referral link
+              </Button>
+            </Grid>
+          )}
+          {isCampaignOwner && linkCreated && (
             <Grid
               container
               item
@@ -269,13 +387,45 @@ const Home: NextPage = () => {
                 <Grid item xs={4}>
                   <Typography align="left">Campaign link</Typography>
                 </Grid>
-                <Grid item xs={6}>
-                  <Typography align="right">{link}</Typography>
+                <Grid item xs={5}>
+                  <Typography align="right">{displayLink}</Typography>
                 </Grid>
-                <Grid item xs={2}>
+                <Grid item xs={3}>
                   <CopyButton text={link} />
                 </Grid>
               </Grid>
+
+              <Grid container item alignItems="center" spacing={1}>
+                <Grid item xs={4}>
+                  <Typography align="left">Amount deposited</Typography>
+                </Grid>
+                <Grid item xs={5} >
+                  {isAddingFunds ? (
+                    <>
+                      <TextField
+                        label="Amount to add"
+                        value={addingAmount}
+                        fullWidth
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value);
+                          if (!Number.isNaN(val)) setAddingAmount(val)
+                        }}
+                        InputProps={{
+                          endAdornment: (
+                            <Button onClick={addAdditionalFunds}>Add</Button>
+                          ),
+                        }}
+                      />
+                    </>
+                  ) : (
+                    <Typography align="right">{amount} USDC</Typography>
+                  )}
+                </Grid>
+                <Grid item xs={3}>
+                  <AddFundsButton />
+                </Grid>
+              </Grid>
+
               <Grid container item>
                 <Grid item xs={4}>
                   <Typography align="left">Ends at</Typography>
@@ -286,15 +436,8 @@ const Home: NextPage = () => {
                   </Typography>
                 </Grid>
               </Grid>
-              <Grid container item>
-                <Grid item xs={4}>
-                  <Typography align="left">Amount deposited</Typography>
-                </Grid>
-                <Grid item xs={8}>
-                  <Typography align="right">{amount} USDC</Typography>
-                </Grid>
-              </Grid>
-              <Grid container item>
+
+              <Grid container item justifyContent="center">
                 <TableContainer component={Paper} style={{ margin: 20 }}>
                   <Table aria-label="simple table">
                     <TableHead>
@@ -320,31 +463,19 @@ const Home: NextPage = () => {
                     </TableBody>
                   </Table>
                 </TableContainer>
+                <ZKRollupButton/>
               </Grid>
+              {isCampaignActive && (
+                <Grid container item>
+                  <Typography>
+                    Your campaign is over. Pay out your promoters!
+                  </Typography>
+                  <EndCampaignButton />
+                </Grid>
+              )}
             </Grid>
           )}
-          {address?.toLowerCase() !== ownerAddress?.toLowerCase() && !linkCreated && (
-            <Grid
-              container
-              item
-              xs={12}
-              md={6}
-              justifyContent="center"
-              style={{ paddingTop: 30 }}
-            >
-              <Button
-                variant="contained"
-                fullWidth
-                disabled={address === ""}
-                onClick={() => {
-                  handleCreateLink();
-                }}
-              >
-                Generate referral link
-              </Button>
-            </Grid>
-          )}
-          {address?.toLowerCase() !== ownerAddress?.toLowerCase() && linkCreated && (
+          {!isCampaignOwner && address && (
             <Grid
               container
               item
@@ -356,10 +487,10 @@ const Home: NextPage = () => {
             >
               <Grid container item alignItems="center" spacing={1}>
                 <Grid item xs={4}>
-                  <Typography align="left">Referral link</Typography>
+                  <Typography align="left">Link to Promote</Typography>
                 </Grid>
                 <Grid item xs={6}>
-                  {/*<Typography align="right">{link}</Typography>*/}
+                  <Typography align="right">{displayLink}</Typography>
                 </Grid>
                 <Grid item xs={2}>
                   <CopyButton text={link} />
@@ -373,6 +504,13 @@ const Home: NextPage = () => {
                   <Typography align="right">{impressions}</Typography>
                 </Grid>
               </Grid>
+              {isCampaignActive && (
+                <Grid container item>
+                  <Typography variant="h3" textAlign="center">
+                    The campaign is over. Please wait to be paid for your work!
+                  </Typography>
+                </Grid>
+              )}
             </Grid>
           )}
         </Grid>
