@@ -55,8 +55,7 @@ const Home: NextPage = () => {
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
   const [addingAmount, setAddingAmount] = useState<number | null>(null);
   const [isAddingFunds, setIsAddingFunds] = useState<boolean>(false);
-  // const isCampaignOwner = ownerAddress === address;
-  const isCampaignOwner = true;
+  const isCampaignOwner = ownerAddress === address;
 
   const handleSignIn = async () => {
 
