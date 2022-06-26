@@ -59,6 +59,7 @@ const Home: NextPage = () => {
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
   const [addingAmount, setAddingAmount] = useState<number | null>(null);
   const [isAddingFunds, setIsAddingFunds] = useState<boolean>(false);
+  const [provider, setProvider] = useState<ethers.providers.Web3Provider | null>(null);
   const isCampaignOwner = ownerAddress === address;
 
   const handleSignIn = async () => {
