@@ -29,9 +29,6 @@ const Home: NextPage = () => {
   const [duration, setDuration] = useState<string>("");
   const [amount, setAmount] = useState<string>("");
   const [contractAddress, setContractAddress] = useState<string | null>(null);
-  const handleWalletSignIn = () => {
-    setAddress("0x2384927496591705");
-  };
 
   const handleSignIn = async () => {
     // const providerWalletConnect = new WalletConnectProvider({

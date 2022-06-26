@@ -20,6 +20,7 @@ import { useState, useEffect } from "react";
 import WalletConnect from "@walletconnect/client";
 import QRCodeModal from "@walletconnect/qrcode-modal";
 import {
+  getCampaignActive,
   getCampaignAmount,
   getEndDate,
   getOwner,
@@ -35,7 +36,8 @@ const Home: NextPage = () => {
       ? router.query.campaignId.toString()
       : "";
   const [link, setLink] = useState<string>("deAdSense.io/c/234");
-  const [endDate, setEndDate] = useState<string | number>(dayjs().add(1, 'day').valueOf());
+  const [endDate, setEndDate] = useState<string | number>(dayjs().valueOf());
+  const [isCampaignActive, setIsCampaignActive] = useState<boolean>(false);
   const [amount, setAmount] = useState<string | number>("0");
   const [impressions, setImpressions] = useState<string | number>("");
   const [ownerAddress, setOwnerAddress] = useState<null | string>(
@@ -111,12 +113,13 @@ const Home: NextPage = () => {
   useEffect(() => {
     async function fetchCampaignData() {
       try {
+        const isCompaignActive = await getCampaignActive(campaignId);
         const fetchedOwnerAddress = await getOwner(campaignId);
         const fetchedEndDate = await getEndDate(campaignId);
         const fetchedAmount = await getCampaignAmount(campaignId);
         console.log(fetchedEndDate.toUTCString());
-        // setOwnerAddress(fetchedOwnerAddress);
-        // setOwnerAddress("0x008ff63eDFCb75733859441ac8702DcC56d6E76D"); // for testing
+        setIsCampaignActive(isCampaignActive);
+        setOwnerAddress(fetchedOwnerAddress);
         setEndDate(dayjs(fetchedEndDate).valueOf());
         setAmount(Number(fetchedAmount)/10**18); // 18 = number of decimals in the token
       }
@@ -278,7 +281,28 @@ const Home: NextPage = () => {
               </Typography>
             </Grid>
           </Grid>
-          {address && ownerAddress && ownerAddress.toLowerCase() === address.toLowerCase() && (
+          {!linkCreated && (
+            <Grid
+              container
+              item
+              xs={12}
+              md={6}
+              justifyContent="center"
+              style={{ paddingTop: 30 }}
+            >
+              <Button
+                variant="contained"
+                fullWidth
+                disabled={address === ""}
+                onClick={() => {
+                  handleCreateLink();
+                }}
+              >
+                Generate referral link
+              </Button>
+            </Grid>
+          )}
+          {isCampaignOwner && linkCreated && (
             <Grid
               container
               item
@@ -344,38 +368,17 @@ const Home: NextPage = () => {
                   </Table>
                 </TableContainer>
               </Grid>
-              {dayjs().isAfter(endDate) && (
-                  <Grid container item>
-                    <Typography>
-                      Your campaign is over. Pay out your promoters!
-                    </Typography>
-                    <EndCampaignButton />
-                  </Grid>
-                )}
+              {isCampaignActive && (
+                <Grid container item>
+                  <Typography>
+                    Your campaign is over. Pay out your promoters!
+                  </Typography>
+                  <EndCampaignButton />
+                </Grid>
+              )}
             </Grid>
           )}
-          {address?.toLowerCase() !== ownerAddress?.toLowerCase() && !linkCreated && (
-            <Grid
-              container
-              item
-              xs={12}
-              md={6}
-              justifyContent="center"
-              style={{ paddingTop: 30 }}
-            >
-              <Button
-                variant="contained"
-                fullWidth
-                disabled={address === ""}
-                onClick={() => {
-                  handleCreateLink();
-                }}
-              >
-                Generate referral link
-              </Button>
-            </Grid>
-          )}
-          {address?.toLowerCase() !== ownerAddress?.toLowerCase() && linkCreated && (
+          {!isCampaignOwner && linkCreated && (
             <Grid
               container
               item
@@ -404,6 +407,13 @@ const Home: NextPage = () => {
                   <Typography align="right">{impressions}</Typography>
                 </Grid>
               </Grid>
+              {isCampaignActive && (
+                <Grid container item>
+                  <Typography variant="h3" textAlign="center">
+                    The campaign is over. Please wait to be paid for your work!
+                  </Typography>
+                </Grid>
+              )}
             </Grid>
           )}
         </Grid>
