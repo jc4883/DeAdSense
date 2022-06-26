@@ -35,7 +35,7 @@ const Home: NextPage = () => {
       : "";
   const [link, setLink] = useState<string>("deAdSense.io/c/234");
   const [endDate, setEndDate] = useState<string | number>("1656197306080");
-  const [amount, setAmount] = useState<string | number | BigInt>("0");
+  const [amount, setAmount] = useState<string | number>("0");
   const [impressions, setImpressions] = useState<string | number>("");
   const [ownerAddress, setOwnerAddress] = useState<null | string>(
     "0x2384927496591705"
@@ -45,7 +45,6 @@ const Home: NextPage = () => {
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
 
   const handleSignIn = async () => {
-    // console.log("16 handleSignIn");
 
     // bridge url
     const bridge = "https://bridge.walletconnect.org";
@@ -55,18 +54,14 @@ const Home: NextPage = () => {
     setConnector(connector);
 
     if (!connector.connected) {
-      // console.log("26 creating session");
       await connector.createSession();
     }
   };
 
   useEffect(() => {
-    // console.log("27 useEffect connector");
     if (!connector) {
-      // console.log("29 no connector!!");
       return;
     }
-    // console.log("32");
 
     // subscribe to connector events
     connector.on("session_update", async (error, payload) => {
@@ -103,38 +98,40 @@ const Home: NextPage = () => {
     });
 
     if (connector.connected) {
-      // console.log("69 connector.connected");
-      console.log(`${connector.connected}, ${connector._connected}`);
-
+      console.log("connector.connected");
       const { chainId, accounts } = connector;
       const address = accounts[0];
       setAddress(accounts[0]);
     }
 
-    // console.log("77");
   }, [connector]);
 
   useEffect(() => {
     async function fetchCampaignData() {
-      const fetchedOwnerAddress = await getOwner(campaignId);
-      const fetchedEndDate = await getEndDate(campaignId);
-      const fetchedAmount = await getCampaignAmount(campaignId);
-      console.log(fetchedEndDate.toUTCString());
-      // console.log(dayjs(fetchedEndDate.toUTCString()).valueOf());
-      setOwnerAddress(fetchedOwnerAddress);
-      setEndDate(dayjs(fetchedEndDate).valueOf());
-      setAmount(fetchedAmount);
+      try {
+        const fetchedOwnerAddress = await getOwner(campaignId);
+        const fetchedEndDate = await getEndDate(campaignId);
+        const fetchedAmount = await getCampaignAmount(campaignId);
+        console.log(fetchedEndDate.toUTCString());
+        // setOwnerAddress(fetchedOwnerAddress);
+        // setOwnerAddress("0x008ff63eDFCb75733859441ac8702DcC56d6E76D"); // for testing
+        setEndDate(dayjs(fetchedEndDate).valueOf());
+        setAmount(Number(fetchedAmount)/10**18); // 18 = number of decimals in the token
+      }
+      catch (error) {
+        console.log(`error loading campaign ${campaignId}`);
+        throw error;
+      }
     }
     if (address) fetchCampaignData();
+
+    // TODO: fetch data from aws as well
   }, [address]);
 
   const handleSignOut = () => {
-    // console.log("81");
     if (connector) {
-      // console.log("83");
       connector.killSession();
     }
-    // console.log("86");
     setAddress("");
     setEndDate("");
     setAmount("");
@@ -144,7 +141,8 @@ const Home: NextPage = () => {
   };
 
   const handleCreateLink = () => {
-    setLink("deAdSense.io/c/234/5882342");
+    const link = `deAdSense.io/c/${campaignId}/${address}`;
+    setLink(link);
     setLinkCreated(true);
   };
 
@@ -257,7 +255,7 @@ const Home: NextPage = () => {
               </Typography>
             </Grid>
           </Grid>
-          {address && ownerAddress && ownerAddress === address && (
+          {address && ownerAddress && ownerAddress.toLowerCase() === address.toLowerCase() && (
             <Grid
               container
               item
@@ -325,7 +323,7 @@ const Home: NextPage = () => {
               </Grid>
             </Grid>
           )}
-          {address !== ownerAddress && !linkCreated && (
+          {address.toLowerCase() !== ownerAddress.toLowerCase() && !linkCreated && (
             <Grid
               container
               item
@@ -346,7 +344,7 @@ const Home: NextPage = () => {
               </Button>
             </Grid>
           )}
-          {address !== ownerAddress && linkCreated && (
+          {address.toLowerCase() !== ownerAddress.toLowerCase() && linkCreated && (
             <Grid
               container
               item
@@ -361,7 +359,7 @@ const Home: NextPage = () => {
                   <Typography align="left">Referral link</Typography>
                 </Grid>
                 <Grid item xs={6}>
-                  <Typography align="right">{link}</Typography>
+                  {/*<Typography align="right">{link}</Typography>*/}
                 </Grid>
                 <Grid item xs={2}>
                   <CopyButton text={link} />
