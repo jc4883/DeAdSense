@@ -24,6 +24,7 @@ import {
   getEndDate,
   getOwner,
 } from "../../../utils/DeAdSenseQueries";
+import { distributeFunds } from "../../../utils/buttonCallbacks";
 
 const Home: NextPage = () => {
   const router = useRouter();
@@ -43,9 +44,9 @@ const Home: NextPage = () => {
   const referData: any = [{ id: "0x23o94", impressions: 50 }];
   const [linkCreated, setLinkCreated] = useState<boolean>(false);
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
+  const isCampaignOwner = ownerAddress === address;
 
   const handleSignIn = async () => {
-
     // bridge url
     const bridge = "https://bridge.walletconnect.org";
 
@@ -103,7 +104,6 @@ const Home: NextPage = () => {
       const address = accounts[0];
       setAddress(accounts[0]);
     }
-
   }, [connector]);
 
   useEffect(() => {
@@ -114,11 +114,9 @@ const Home: NextPage = () => {
         const fetchedAmount = await getCampaignAmount(campaignId);
         console.log(fetchedEndDate.toUTCString());
         // setOwnerAddress(fetchedOwnerAddress);
-        // setOwnerAddress("0x008ff63eDFCb75733859441ac8702DcC56d6E76D"); // for testing
         setEndDate(dayjs(fetchedEndDate).valueOf());
-        setAmount(Number(fetchedAmount)/10**18); // 18 = number of decimals in the token
-      }
-      catch (error) {
+        setAmount(Number(fetchedAmount) / 10 ** 18); // 18 = number of decimals in the token
+      } catch (error) {
         console.log(`error loading campaign ${campaignId}`);
         throw error;
       }
@@ -141,7 +139,9 @@ const Home: NextPage = () => {
   };
 
   const handleCreateLink = () => {
-    const link = `deAdSense.io/c/${campaignId}/${address}`;
+    const link = isCampaignOwner
+      ? `deAdSense.io/c/${campaignId}`
+      : `deAdSense.io/c/${campaignId}/${address}`;
     setLink(link);
     setLinkCreated(true);
   };
@@ -163,6 +163,24 @@ const Home: NextPage = () => {
         }}
       >
         Copy
+      </Button>
+    );
+  };
+
+  const EndCampaignButton = ({ text }: any) => {
+    return (
+      <Button
+        variant="contained"
+        color="primary"
+        fullWidth
+        onClick={() => {
+          distributeFunds(campaignId, null);
+        }}
+        style={{ marginTop: 10, height: 60 }}
+      >
+        <Typography variant="h4" style={{ color: "white" }}>
+          Distribute Funds
+        </Typography>
       </Button>
     );
   };
@@ -255,96 +273,109 @@ const Home: NextPage = () => {
               </Typography>
             </Grid>
           </Grid>
-          {address && ownerAddress && ownerAddress.toLowerCase() === address.toLowerCase() && (
-            <Grid
-              container
-              item
-              xs={12}
-              md={6}
-              style={{ paddingTop: 30 }}
-              justifyContent="center"
-              spacing={2}
-            >
-              <Grid container item alignItems="center" spacing={1}>
-                <Grid item xs={4}>
-                  <Typography align="left">Campaign link</Typography>
-                </Grid>
-                <Grid item xs={6}>
-                  <Typography align="right">{link}</Typography>
-                </Grid>
-                <Grid item xs={2}>
-                  <CopyButton text={link} />
-                </Grid>
-              </Grid>
-              <Grid container item>
-                <Grid item xs={4}>
-                  <Typography align="left">Ends at</Typography>
-                </Grid>
-                <Grid item xs={8}>
-                  <Typography align="right">
-                    {getFormattedTime(endDate)}
-                  </Typography>
-                </Grid>
-              </Grid>
-              <Grid container item>
-                <Grid item xs={4}>
-                  <Typography align="left">Amount deposited</Typography>
-                </Grid>
-                <Grid item xs={8}>
-                  <Typography align="right">{amount} USDC</Typography>
-                </Grid>
-              </Grid>
-              <Grid container item>
-                <TableContainer component={Paper} style={{ margin: 20 }}>
-                  <Table aria-label="simple table">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Referrers</TableCell>
-                        <TableCell align="right">Impressions</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {referData.map((row: any) => (
-                        <TableRow
-                          key={row.id}
-                          sx={{
-                            "&:last-child td, &:last-child th": { border: 0 },
-                          }}
-                        >
-                          <TableCell component="th" scope="row">
-                            {row.id}
-                          </TableCell>
-                          <TableCell align="right">{row.impressions}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </Grid>
-            </Grid>
-          )}
-          {address?.toLowerCase() !== ownerAddress?.toLowerCase() && !linkCreated && (
-            <Grid
-              container
-              item
-              xs={12}
-              md={6}
-              justifyContent="center"
-              style={{ paddingTop: 30 }}
-            >
-              <Button
-                variant="contained"
-                fullWidth
-                disabled={address === ""}
-                onClick={() => {
-                  handleCreateLink();
-                }}
+          {address &&
+            ownerAddress &&
+            ownerAddress.toLowerCase() === address.toLowerCase() && (
+              <Grid
+                container
+                item
+                xs={12}
+                md={6}
+                style={{ paddingTop: 30 }}
+                justifyContent="center"
+                spacing={2}
               >
-                Generate referral link
-              </Button>
-            </Grid>
-          )}
-          {address?.toLowerCase() !== ownerAddress?.toLowerCase() && linkCreated && (
+                <Grid container item alignItems="center" spacing={1}>
+                  <Grid item xs={4}>
+                    <Typography align="left">Campaign link</Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography align="right">{link}</Typography>
+                  </Grid>
+                  <Grid item xs={2}>
+                    <CopyButton text={link} />
+                  </Grid>
+                </Grid>
+                <Grid container item>
+                  <Grid item xs={4}>
+                    <Typography align="left">Ends at</Typography>
+                  </Grid>
+                  <Grid item xs={8}>
+                    <Typography align="right">
+                      {getFormattedTime(endDate)}
+                    </Typography>
+                  </Grid>
+                </Grid>
+                <Grid container item>
+                  <Grid item xs={4}>
+                    <Typography align="left">Amount deposited</Typography>
+                  </Grid>
+                  <Grid item xs={8}>
+                    <Typography align="right">{amount} USDC</Typography>
+                  </Grid>
+                </Grid>
+                <Grid container item>
+                  <TableContainer component={Paper} style={{ margin: 20 }}>
+                    <Table aria-label="simple table">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Referrers</TableCell>
+                          <TableCell align="right">Impressions</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {referData.map((row: any) => (
+                          <TableRow
+                            key={row.id}
+                            sx={{
+                              "&:last-child td, &:last-child th": { border: 0 },
+                            }}
+                          >
+                            <TableCell component="th" scope="row">
+                              {row.id}
+                            </TableCell>
+                            <TableCell align="right">
+                              {row.impressions}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Grid>
+                {dayjs().isAfter(endDate) && (
+                  <Grid container item>
+                    <Typography>
+                      Your campaign is over. Pay out your promoters!
+                    </Typography>
+                    <EndCampaignButton />
+                  </Grid>
+                )}
+              </Grid>
+            )}
+          {address.toLowerCase() !== ownerAddress.toLowerCase() &&
+            !linkCreated && (
+              <Grid
+                container
+                item
+                xs={12}
+                md={6}
+                justifyContent="center"
+                style={{ paddingTop: 30 }}
+              >
+                <Button
+                  variant="contained"
+                  fullWidth
+                  disabled={address === ""}
+                  onClick={() => {
+                    handleCreateLink();
+                  }}
+                >
+                  Generate referral link
+                </Button>
+              </Grid>
+            )}
+          {address.toLowerCase() !== ownerAddress.toLowerCase() && linkCreated && (
             <Grid
               container
               item

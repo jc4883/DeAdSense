@@ -21,7 +21,8 @@ export async function createCampaign(link: string, amount: number, provider: eth
     return contractAddress;
 }
 
-export async function distributeFunds(contractAddress: string, provider: ethers.providers.Web3Provider) {
+export async function distributeFunds(contractAddress: string, provider: ethers.providers.Web3Provider | null) {
+    if (provider == null) return;
     var distributeFundsTxInstruction = await distributeFinalFundsTransaction(contractAddress, provider);
     var distributeFundsTx = await provider.getSigner().sendTransaction(distributeFundsTxInstruction);
     var distributeFundsTxFinal = await provider.waitForTransaction(distributeFundsTx.hash);
