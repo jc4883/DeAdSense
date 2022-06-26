@@ -59,10 +59,7 @@ const Home: NextPage = () => {
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
   const [addingAmount, setAddingAmount] = useState<number | null>(null);
   const [isAddingFunds, setIsAddingFunds] = useState<boolean>(false);
-  const [provider, setProvider] = useState<ethers.providers.Web3Provider | null>(null);
-
-  // const isCampaignOwner = ownerAddress === address;
-  const isCampaignOwner = true;
+  const isCampaignOwner = ownerAddress === address;
 
   const handleSignIn = async () => {
 
@@ -172,7 +169,7 @@ const Home: NextPage = () => {
   useEffect(() => {
     if (address == null) return;
     if (!isCampaignOwner) {
-      setLink(`deAdSense.io/c/${campaignId}/${address}`) 
+      setLink(`localhost:3000/c/${campaignId}/${address}`) 
     }
   }, [address, isCampaignOwner, campaignId])
 
@@ -189,7 +186,7 @@ const Home: NextPage = () => {
   };
 
   const handleCreateLink = () => {
-    const link = `deAdSense.io/c/${campaignId}`
+    const link = `localhost:3000/c/${campaignId}`
     setLink(link);
     setLinkCreated(true);
   };
