@@ -19,7 +19,11 @@ import dayjs from "dayjs";
 import { useState, useEffect } from "react";
 import WalletConnect from "@walletconnect/client";
 import QRCodeModal from "@walletconnect/qrcode-modal";
-import { getEndDate } from "../../../utils/DeAdSenseQueries";
+import {
+  getCampaignAmount,
+  getEndDate,
+  getOwner,
+} from "../../../utils/DeAdSenseQueries";
 
 const Home: NextPage = () => {
   const router = useRouter();
@@ -31,7 +35,7 @@ const Home: NextPage = () => {
       : "";
   const [link, setLink] = useState<string>("deAdSense.io/c/234");
   const [endDate, setEndDate] = useState<string | number>("1656197306080");
-  const [amount, setAmount] = useState<string | number>("0");
+  const [amount, setAmount] = useState<string | number | BigInt>("0");
   const [impressions, setImpressions] = useState<string | number>("");
   const [ownerAddress, setOwnerAddress] = useState<null | string>(
     "0x2384927496591705"
@@ -112,9 +116,14 @@ const Home: NextPage = () => {
 
   useEffect(() => {
     async function fetchCampaignData() {
-      console.log("hello");
+      const fetchedOwnerAddress = await getOwner(campaignId);
       const fetchedEndDate = await getEndDate(campaignId);
-      console.log(fetchedEndDate);
+      const fetchedAmount = await getCampaignAmount(campaignId);
+      console.log(fetchedEndDate.toUTCString());
+      // console.log(dayjs(fetchedEndDate.toUTCString()).valueOf());
+      setOwnerAddress(fetchedOwnerAddress);
+      setEndDate(dayjs(fetchedEndDate).valueOf());
+      setAmount(fetchedAmount);
     }
     if (address) fetchCampaignData();
   }, [address]);
