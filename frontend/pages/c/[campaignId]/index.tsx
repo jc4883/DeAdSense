@@ -34,6 +34,10 @@ import {
   getDoc
 } from "firebase/firestore";
 
+import { ethers  } from 'ethers';
+import WalletConnectProvider from "@walletconnect/web3-provider";
+
+
 const Home: NextPage = () => {
   const router = useRouter();
   const [connector, setConnector] = useState<WalletConnect | null>(null);
@@ -55,6 +59,7 @@ const Home: NextPage = () => {
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
   const [addingAmount, setAddingAmount] = useState<number | null>(null);
   const [isAddingFunds, setIsAddingFunds] = useState<boolean>(false);
+  const [provider, setProvider] = useState<ethers.providers.Web3Provider | null>(null);
   const isCampaignOwner = ownerAddress.toLowerCase() === address.toLowerCase();
   console.log(58, ownerAddress, address, isCampaignOwner);
 
@@ -70,6 +75,14 @@ const Home: NextPage = () => {
     if (!connector.connected) {
       await connector.createSession();
     }
+    var walletConnectProvider = new WalletConnectProvider( {
+      rpc: {
+        80001: "https://polygon-mumbai.g.alchemy.com/v2/Sc6ox39EF8WqiAxTOrCXe5LDWiw5TeZt",
+      },
+      connector: connector
+    });
+    await walletConnectProvider.enable();
+    setProvider(new ethers.providers.Web3Provider(walletConnectProvider));
   };
 
   useEffect(() => {
@@ -196,11 +209,13 @@ const Home: NextPage = () => {
         referrerIds.push(referrerId);
         impressionCounts.push(impressions)
       }
-      impressionRollupCallback(campaignId, referrerIds, impressionCounts, null)
+      if(provider)
+        impressionRollupCallback(campaignId, referrerIds, impressionCounts, provider)
     };
   }
   const addAdditionalFunds = async () => {
-    addFunds(campaignId, addingAmount, null)
+    if(provider)
+      addFunds(campaignId, addingAmount as number, provider)
   }
 
   const CopyButton = ({ text }: any) => {
@@ -241,7 +256,9 @@ const Home: NextPage = () => {
         color="primary"
         fullWidth
         onClick={() => {
-          distributeFunds(campaignId, null);
+          if(provider) {
+            distributeFunds(campaignId, provider);
+          }
         }}
         style={{ marginTop: 10, height: 60 }}
       >
