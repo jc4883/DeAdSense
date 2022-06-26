@@ -3,6 +3,8 @@ import Head from "next/head";
 import {
   Grid,
   Typography,
+  TextField,
+  InputAdornment,
   Button,
   Chip,
   Table,
@@ -25,7 +27,7 @@ import {
   getEndDate,
   getOwner,
 } from "../../../utils/DeAdSenseQueries";
-import { distributeFunds } from "../../../utils/buttonCallbacks";
+import { distributeFunds, impressionRollupCallback, addFunds } from "../../../utils/buttonCallbacks";
 import { db } from "../../../clients/Firebase";
 import {
   doc,
@@ -51,7 +53,10 @@ const Home: NextPage = () => {
   const [referData, setReferData] = useState<Array<any>>([]);
   const [linkCreated, setLinkCreated] = useState<boolean>(false);
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
-  const isCampaignOwner = ownerAddress === address;
+  const [addingAmount, setAddingAmount] = useState<number | null>(null);
+  const [isAddingFunds, setIsAddingFunds] = useState<boolean>(false);
+  // const isCampaignOwner = ownerAddress === address;
+  const isCampaignOwner = true;
 
   const handleSignIn = async () => {
 
@@ -180,6 +185,24 @@ const Home: NextPage = () => {
     return output;
   };
 
+  const saveToChain = async () => {
+    const docSnap = await getDoc(doc(db, "impressionCount", campaignId));
+    if (docSnap.exists()) {
+      const docData = docSnap.data();
+      const referrerIds = [];
+      const impressionCounts = [];
+      
+      for (let [referrerId, impressions] of Object.entries(docData)) {
+        referrerIds.push(referrerId);
+        impressionCounts.push(impressions)
+      }
+      impressionRollupCallback(campaignId, referrerIds, impressionCounts, null)
+    };
+  }
+  const addAdditionalFunds = async () => {
+    addFunds(campaignId, addingAmount, null)
+  }
+
   const CopyButton = ({ text }: any) => {
     return (
       <Button
@@ -196,7 +219,22 @@ const Home: NextPage = () => {
     );
   };
 
-  const EndCampaignButton = ({ text }: any) => {
+  const AddFundsButton = () => {
+    return (
+      <Button
+        variant="contained"
+        color={isAddingFunds ? "primary" : "secondary"}
+        fullWidth
+        onClick={() => {
+          isAddingFunds ? setIsAddingFunds(false) :setIsAddingFunds(true)
+        }}
+      >
+        {isAddingFunds ? 'Cancel' : 'Add Funds'}
+      </Button>
+    )
+  }
+
+  const EndCampaignButton = () => {
     return (
       <Button
         variant="contained"
@@ -214,8 +252,17 @@ const Home: NextPage = () => {
     );
   };
 
+  const ZKRollupButton = () => {
+    return (
+      <Button variant="contained" color="primary">
+        <Typography style={{fontSize: 18}} onClick={saveToChain}>
+          Save Impressions to Chain
+        </Typography>
+      </Button>
+    )
+  }
+
   const displayLink = link.length > 25 ? `${link.slice(0, 15)}...${link.slice(-10)}` : link
-console.log('displayLink', displayLink)
 
   return (
     <div
@@ -340,13 +387,45 @@ console.log('displayLink', displayLink)
                 <Grid item xs={4}>
                   <Typography align="left">Campaign link</Typography>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid item xs={5}>
                   <Typography align="right">{displayLink}</Typography>
                 </Grid>
-                <Grid item xs={2}>
+                <Grid item xs={3}>
                   <CopyButton text={link} />
                 </Grid>
               </Grid>
+
+              <Grid container item alignItems="center" spacing={1}>
+                <Grid item xs={4}>
+                  <Typography align="left">Amount deposited</Typography>
+                </Grid>
+                <Grid item xs={5} >
+                  {isAddingFunds ? (
+                    <>
+                      <TextField
+                        label="Amount to add"
+                        value={addingAmount}
+                        fullWidth
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value);
+                          if (!Number.isNaN(val)) setAddingAmount(val)
+                        }}
+                        InputProps={{
+                          endAdornment: (
+                            <Button onClick={addAdditionalFunds}>Add</Button>
+                          ),
+                        }}
+                      />
+                    </>
+                  ) : (
+                    <Typography align="right">{amount} USDC</Typography>
+                  )}
+                </Grid>
+                <Grid item xs={3}>
+                  <AddFundsButton />
+                </Grid>
+              </Grid>
+
               <Grid container item>
                 <Grid item xs={4}>
                   <Typography align="left">Ends at</Typography>
@@ -357,15 +436,8 @@ console.log('displayLink', displayLink)
                   </Typography>
                 </Grid>
               </Grid>
-              <Grid container item>
-                <Grid item xs={4}>
-                  <Typography align="left">Amount deposited</Typography>
-                </Grid>
-                <Grid item xs={8}>
-                  <Typography align="right">{amount} USDC</Typography>
-                </Grid>
-              </Grid>
-              <Grid container item>
+
+              <Grid container item justifyContent="center">
                 <TableContainer component={Paper} style={{ margin: 20 }}>
                   <Table aria-label="simple table">
                     <TableHead>
@@ -391,6 +463,7 @@ console.log('displayLink', displayLink)
                     </TableBody>
                   </Table>
                 </TableContainer>
+                <ZKRollupButton/>
               </Grid>
               {isCampaignActive && (
                 <Grid container item>
