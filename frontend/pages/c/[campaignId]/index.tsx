@@ -26,6 +26,11 @@ import {
   getOwner,
 } from "../../../utils/DeAdSenseQueries";
 import { distributeFunds } from "../../../utils/buttonCallbacks";
+import { db } from "../../../clients/Firebase";
+import {
+  doc,
+  getDoc
+} from "firebase/firestore";
 
 const Home: NextPage = () => {
   const router = useRouter();
@@ -33,7 +38,7 @@ const Home: NextPage = () => {
   const [address, setAddress] = useState<null | string>("");
   const campaignId: string =
     router.query.campaignId !== undefined
-      ? router.query.campaignId.toString()
+      ? router.query.campaignId.toString().toLowerCase()
       : "";
   const [link, setLink] = useState<string>("deAdSense.io/c/234");
   const [endDate, setEndDate] = useState<string | number>(dayjs().valueOf());
@@ -43,7 +48,7 @@ const Home: NextPage = () => {
   const [ownerAddress, setOwnerAddress] = useState<null | string>(
     "0x2384927496591705"
   );
-  const referData: any = [{ id: "0x23o94", impressions: 50 }];
+  const [referData, setReferData] = useState<Array<any>>([]);
   const [linkCreated, setLinkCreated] = useState<boolean>(false);
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
   const isCampaignOwner = ownerAddress === address;
@@ -112,6 +117,18 @@ const Home: NextPage = () => {
 
   useEffect(() => {
     async function fetchCampaignData() {
+      const docSnap = await getDoc(doc(db, "impressionCount", campaignId));
+      if (docSnap.exists()) {
+        const docData = docSnap.data();
+        setImpressions(docData[address.toLowerCase()].toString() || "0");
+        const newReferData = [];
+        for (let [referrerId, impressions] of Object.entries(docData)) {
+          newReferData.push({id: referrerId, impressions});
+        }
+        console.log(newReferData);
+        setReferData(newReferData);
+      };
+
       try {
         const isCompaignActive = await getCampaignActive(campaignId);
         const fetchedOwnerAddress = await getOwner(campaignId);
@@ -124,7 +141,7 @@ const Home: NextPage = () => {
         setAmount(Number(fetchedAmount)/10**18); // 18 = number of decimals in the token
       }
       catch (error) {
-        console.log(`error loading campaign ${campaignId}`);
+        console.log(`error loading campaign ${campaignId} from contract`);
         throw error;
       }
     }
@@ -317,7 +334,7 @@ const Home: NextPage = () => {
                   <Typography align="left">Campaign link</Typography>
                 </Grid>
                 <Grid item xs={6}>
-                  <Typography align="right">{link}</Typography>
+                  {/* <Typography align="right">{link}</Typography> */}
                 </Grid>
                 <Grid item xs={2}>
                   <CopyButton text={link} />

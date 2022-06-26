@@ -4,18 +4,35 @@ import { Grid, Typography, Backdrop, CircularProgress } from "@mui/material";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { getLink } from "../../../utils/DeAdSenseQueries";
+import { db } from "../../../clients/Firebase";
+import {
+  doc,
+  setDoc,
+  updateDoc,
+  getDoc
+} from "firebase/firestore";
 
 const RedirectPage: NextPage = () => {
   const router = useRouter();
-  const campaignId = router.query.campaignId;
-  const referId = router.query.referId;
+  const campaignId = typeof router.query.campaignId === "string" ? router.query.campaignId?.toLowerCase() : "";
+  const referId = typeof router.query.referId === "string" ?  router.query.referId?.toLowerCase() : "";
 
   useEffect(() => {
     async function fetchData() {
-      // 1. get actual url from campaign id (from smart contract)
-      // 2. increment impression for referId (on AWS server)
-      // 3. redirect to url
       console.log(campaignId);
+
+      const docRef = doc(db, "impressionCount", campaignId);
+      const docSnap = await getDoc(docRef);
+      if (!docSnap.exists()) {
+        console.log("Error missing document");
+      }
+      const countData = docSnap.data();
+      const oldCount = countData?.[referId];
+      console.log("old count: ", oldCount);
+      await updateDoc(docRef, {
+        [referId] : oldCount + 1
+      })
+
       let redirectLink = await getLink(campaignId);
       if (!redirectLink.startsWith("https://") && !redirectLink.startsWith("http://")) {
         redirectLink = "https://" + redirectLink;
