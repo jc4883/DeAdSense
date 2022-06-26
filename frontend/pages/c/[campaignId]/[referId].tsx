@@ -24,14 +24,18 @@ const RedirectPage: NextPage = () => {
       const docRef = doc(db, "impressionCount", campaignId);
       const docSnap = await getDoc(docRef);
       if (!docSnap.exists()) {
-        console.log("Error missing document");
+        await setDoc(docRef, {
+          [referId] : 1
+        })
       }
-      const countData = docSnap.data();
-      const oldCount = countData?.[referId];
-      console.log("old count: ", oldCount);
-      await updateDoc(docRef, {
-        [referId] : oldCount + 1
-      })
+      else {
+        const countData = docSnap.data();
+        const oldCount = countData?.[referId];
+        console.log("old count: ", oldCount);
+        await updateDoc(docRef, {
+          [referId] : oldCount + 1
+        })
+      }
 
       let redirectLink = await getLink(campaignId);
       if (!redirectLink.startsWith("https://") && !redirectLink.startsWith("http://")) {
