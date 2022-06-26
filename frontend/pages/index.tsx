@@ -38,17 +38,18 @@ const Home: NextPage = () => {
     //   rpc: {
     //     80001: "https://polygon-mumbai.g.alchemy.com/v2/Sc6ox39EF8WqiAxTOrCXe5LDWiw5TeZt",
     //   },
+    //   qrcodeModal: QRCodeModal
     // });
 
-    // //  Enable session (triggers QR Code modal)
-    // await providerWalletConnect.enable();
+    //  Enable session (triggers QR Code modal)
+    //await providerWalletConnect.enable();
 
-    // //  Wrap with Web3Provider from ethers.js
+    //  Wrap with Web3Provider from ethers.js
     // setProvider(new ethers.providers.Web3Provider(providerWalletConnect));
 
     //Enable session (triggers QR Code modal)
     //await provider.enable();
-    // console.log("16 handleSignIn");
+    //console.log("16 handleSignIn");
 
     // bridge url
     const bridge = "https://bridge.walletconnect.org";
@@ -61,14 +62,21 @@ const Home: NextPage = () => {
       // console.log("26 creating session");
       await connector.createSession();
     }
+    var walletConnectProvider = new WalletConnectProvider( {
+      rpc: {
+        80001: "https://polygon-mumbai.g.alchemy.com/v2/Sc6ox39EF8WqiAxTOrCXe5LDWiw5TeZt",
+      },
+      connector: connector
+    });
+    await walletConnectProvider.enable();
+    setProvider(new ethers.providers.Web3Provider(walletConnectProvider));
   };
 
   const createCampaignCallback = async () => {
-    console.log('1');
     if(link != "" && amount != "" && provider) {
-      console.log('2');
-      setContractAddress(await createCampaign(link, parseInt(amount), provider));
-      alert(contractAddress);
+      var contractAddressTemp = await createCampaign(link, parseInt(amount), provider);
+      setContractAddress(contractAddressTemp);
+      alert(contractAddressTemp);
     }
   }
 

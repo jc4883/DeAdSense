@@ -9,22 +9,25 @@ export async function createCampaign(link: string, amount: number, provider: eth
     var createContractTx = await provider.getSigner().sendTransaction(createContractTxInstruction);
     var createContractTxFinal = await provider.waitForTransaction(createContractTx.hash)
     var contractAddress = createContractTxFinal.contractAddress;
+    console.log(contractAddress);
+    
     
     var approveOp = await approveSuperTokenOperation(contractAddress, amount, provider);
     var approveTransaction = await approveOp.exec(provider.getSigner());
     var approveTransactionFinal = await provider.waitForTransaction(approveTransaction.hash);
 
-    var addFundsTxInstruction = await addFundsToContractTransaction(contractAddress, amount);
-    var addFundsTx = await provider.getSigner().sendTransaction(addFundsTxInstruction);
+
+    var addFundsTx = await addFundsToContractTransaction(contractAddress, amount, provider);
+    //var addFundsTx = await provider.getSigner().sendTransaction(addFundsTxInstruction);
     var addFundsTxFinal = await provider.waitForTransaction(addFundsTx.hash);
 
     return contractAddress;
 }
 
 export async function distributeFunds(contractAddress: string, provider: ethers.providers.Web3Provider) {
-    var distributeFundsTxInstruction = await distributeFinalFundsTransaction(contractAddress, provider);
-    var distributeFundsTx = await provider.getSigner().sendTransaction(distributeFundsTxInstruction);
-    var distributeFundsTxFinal = await provider.waitForTransaction(distributeFundsTx.hash);
+    var distributeFundsTx = await distributeFinalFundsTransaction(contractAddress, provider);
+    //var distributeFundsTx = await provider.getSigner().sendTransaction(distributeFundsTxInstruction);
+    //var distributeFundsTxFinal = await provider.waitForTransaction(distributeFundsTx.hash);
 }
 
 export async function addFunds(contractAddress: string, amount: number, provider: ethers.providers.Web3Provider) {
@@ -32,13 +35,13 @@ export async function addFunds(contractAddress: string, amount: number, provider
     var approveTransaction = await approveOp.exec(provider.getSigner());
     var approveTransactionFinal = await provider.waitForTransaction(approveTransaction.hash);
 
-    var addFundsTxInstruction = await addFundsToContractTransaction(contractAddress, amount);
-    var addFundsTx = await provider.getSigner().sendTransaction(addFundsTxInstruction);
+    var addFundsTx = await addFundsToContractTransaction(contractAddress, amount, provider);
+    //var addFundsTx = await provider.getSigner().sendTransaction(addFundsTxInstruction);
     var addFundsTxFinal = await provider.waitForTransaction(addFundsTx.hash);
 }
 
 export async function impressionRollupCallback(contractAddress: string, refferers: string[], count: number[], provider: ethers.providers.Web3Provider) {
-    var rollupTxInstruction = await impressionRollupTransaction(contractAddress, refferers, count, provider);
-    var rollupTx = await provider.getSigner().sendTransaction(rollupTxInstruction);
-    var rollupTxFinal = await provider.waitForTransaction(rollupTx.hash);
+    var rollupTx = await impressionRollupTransaction(contractAddress, refferers, count, provider);
+    //var rollupTx = await provider.getSigner().sendTransaction(rollupTxInstruction);
+    //var rollupTxFinal = await provider.waitForTransaction(rollupTx.hash);
 }

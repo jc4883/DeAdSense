@@ -16,7 +16,7 @@ const RedirectPage: NextPage = () => {
       // 2. increment impression for referId (on AWS server)
       // 3. redirect to url
       console.log(campaignId);
-      let redirectLink = await getLink(campaignId);
+      let redirectLink = await getLink(campaignId as string);
       if (!redirectLink.startsWith("https://") && !redirectLink.startsWith("http://")) {
         redirectLink = "https://" + redirectLink;
       }

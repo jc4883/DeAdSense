@@ -70,10 +70,12 @@ export async function getNewContractTransaction(startDate: Date, endDate: Date, 
     return dasContractFactory.getDeployTransaction(startDateInSecs, endDateInSecs, link, fUSDCx.address, 0, hostAddr);
 }
 
-export async function addFundsToContractTransaction(contractAddress: string, amount: number): Promise<ethers.providers.TransactionRequest> {
-    var ctx = await getContext(contractAddress);
-    var sendFunds = await ctx.contract.addFunds(BigNumber.from(10).pow(18).mul(amount));
-    return sendFunds as ethers.providers.TransactionRequest;
+export async function addFundsToContractTransaction(contractAddress: string, amount: number, provider: ethers.providers.Web3Provider): Promise<ethers.ContractTransaction> {
+    var ctx = await getContext(contractAddress, provider);
+    var connectedContract = await ctx.contract.connect(provider.getSigner());
+    var nonce = await ctx.contract.connect(provider.getSigner()).signer.getTransactionCount();
+    var sendFunds = await connectedContract.addFunds(BigNumber.from(10).pow(18).mul(amount), {nonce: nonce});
+    return sendFunds;
 }
 
 export async function approveSuperTokenOperation(contractAddress: string, amount: number, provider: ethers.providers.Web3Provider): Promise<Operation> {
@@ -86,18 +88,20 @@ export async function approveSuperTokenOperation(contractAddress: string, amount
     return fUSDCx.approve({amount:(BigNumber.from(10).pow(18).mul(amount).add(1)).toString(), receiver: ctx.contract.address})
 }
 
-export async function impressionRollupTransaction(contractAddress: string, refferers: string[], count: number[], provider: ethers.providers.Provider = new ethers.providers.JsonRpcProvider(API_URL)): Promise<ethers.providers.TransactionRequest> {
+export async function impressionRollupTransaction(contractAddress: string, refferers: string[], count: number[], provider: ethers.providers.Web3Provider): Promise<ethers.ContractTransaction> {
     var contract = (await getContext(contractAddress, provider)).contract;
+    var nonce = await provider.getSigner().getTransactionCount();
 
-    var rollupTx = contract.impressionRollup(refferers, count);
+    var rollupTx = contract.connect(provider.getSigner()).impressionRollup(refferers, count, {nonce: nonce});
 
-    return rollupTx as ethers.providers.TransactionRequest;
+    return rollupTx;
 }
 
-export async function distributeFinalFundsTransaction(contractAddress: string, provider: ethers.providers.Provider = new ethers.providers.JsonRpcProvider(API_URL)): Promise<ethers.providers.TransactionRequest> {
+export async function distributeFinalFundsTransaction(contractAddress: string, provider: ethers.providers.Web3Provider): Promise<ethers.ContractTransaction> {
     var contract = (await getContext(contractAddress, provider)).contract;
+    var nonce = await provider.getSigner().getTransactionCount();
 
-    var distributeTx = contract.distributeFinalFunds();
+    var distributeTx = contract.connect(provider.getSigner()).distributeFinalFunds({nonce: nonce});
 
-    return distributeTx as ethers.providers.TransactionRequest;
+    return distributeTx;
 }
