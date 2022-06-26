@@ -24,6 +24,7 @@ import {
   getEndDate,
   getOwner,
 } from "../../../utils/DeAdSenseQueries";
+import { distributeFunds } from "../../../utils/buttonCallbacks";
 
 const Home: NextPage = () => {
   const router = useRouter();
@@ -34,7 +35,7 @@ const Home: NextPage = () => {
       ? router.query.campaignId.toString()
       : "";
   const [link, setLink] = useState<string>("deAdSense.io/c/234");
-  const [endDate, setEndDate] = useState<string | number>("1656197306080");
+  const [endDate, setEndDate] = useState<string | number>(dayjs().add(1, 'day').valueOf());
   const [amount, setAmount] = useState<string | number>("0");
   const [impressions, setImpressions] = useState<string | number>("");
   const [ownerAddress, setOwnerAddress] = useState<null | string>(
@@ -43,6 +44,7 @@ const Home: NextPage = () => {
   const referData: any = [{ id: "0x23o94", impressions: 50 }];
   const [linkCreated, setLinkCreated] = useState<boolean>(false);
   const [snackbarOpen, setSnackbarOpen] = useState<boolean>(false);
+  const isCampaignOwner = ownerAddress === address;
 
   const handleSignIn = async () => {
 
@@ -141,7 +143,9 @@ const Home: NextPage = () => {
   };
 
   const handleCreateLink = () => {
-    const link = `deAdSense.io/c/${campaignId}/${address}`;
+    const link = isCampaignOwner
+      ? `deAdSense.io/c/${campaignId}`
+      : `deAdSense.io/c/${campaignId}/${address}`;
     setLink(link);
     setLinkCreated(true);
   };
@@ -166,6 +170,25 @@ const Home: NextPage = () => {
       </Button>
     );
   };
+
+  const EndCampaignButton = ({ text }: any) => {
+    return (
+      <Button
+        variant="contained"
+        color="primary"
+        fullWidth
+        onClick={() => {
+          distributeFunds(campaignId, null);
+        }}
+        style={{ marginTop: 10, height: 60 }}
+      >
+        <Typography variant="h4" style={{ color: "white" }}>
+          Distribute Funds
+        </Typography>
+      </Button>
+    );
+  };
+
 
   return (
     <div
@@ -321,6 +344,14 @@ const Home: NextPage = () => {
                   </Table>
                 </TableContainer>
               </Grid>
+              {dayjs().isAfter(endDate) && (
+                  <Grid container item>
+                    <Typography>
+                      Your campaign is over. Pay out your promoters!
+                    </Typography>
+                    <EndCampaignButton />
+                  </Grid>
+                )}
             </Grid>
           )}
           {address?.toLowerCase() !== ownerAddress?.toLowerCase() && !linkCreated && (
