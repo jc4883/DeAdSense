@@ -15,19 +15,39 @@ import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { useState, useEffect } from "react";
 import WalletConnect from "@walletconnect/client";
 import QRCodeModal from "@walletconnect/qrcode-modal";
+import { ethers  } from 'ethers';
+import WalletConnectProvider from "@walletconnect/web3-provider";
+import { createCampaign } from "../utils/buttonCallbacks";
+
 
 const Home: NextPage = () => {
   const router = useRouter();
   const [connector, setConnector] = useState<WalletConnect | null>(null);
+  const [provider, setProvider] = useState<ethers.providers.Web3Provider | null>(null);
   const [address, setAddress] = useState<string>("");
   const [link, setLink] = useState<string>("");
   const [duration, setDuration] = useState<string>("");
   const [amount, setAmount] = useState<string>("");
+  const [contractAddress, setContractAddress] = useState<string | null>(null);
   const handleWalletSignIn = () => {
     setAddress("0x2384927496591705");
   };
 
   const handleSignIn = async () => {
+    // const providerWalletConnect = new WalletConnectProvider({
+    //   rpc: {
+    //     80001: "https://polygon-mumbai.g.alchemy.com/v2/Sc6ox39EF8WqiAxTOrCXe5LDWiw5TeZt",
+    //   },
+    // });
+
+    // //  Enable session (triggers QR Code modal)
+    // await providerWalletConnect.enable();
+
+    // //  Wrap with Web3Provider from ethers.js
+    // setProvider(new ethers.providers.Web3Provider(providerWalletConnect));
+
+    //Enable session (triggers QR Code modal)
+    //await provider.enable();
     // console.log("16 handleSignIn");
 
     // bridge url
@@ -42,6 +62,15 @@ const Home: NextPage = () => {
       await connector.createSession();
     }
   };
+
+  const createCampaignCallback = async () => {
+    console.log('1');
+    if(link != "" && amount != "" && provider) {
+      console.log('2');
+      setContractAddress(await createCampaign(link, parseInt(amount), provider));
+      alert(contractAddress);
+    }
+  }
 
   useEffect(() => {
     // console.log("27 useEffect connector");
@@ -221,6 +250,7 @@ const Home: NextPage = () => {
               </Grid>
               <Grid item xs={12} md={7}>
                 <Button
+                  onClick={() => createCampaignCallback()}
                   disabled={!Boolean(link && duration && amount)}
                   variant="contained"
                   color="primary"

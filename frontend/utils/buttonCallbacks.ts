@@ -1,5 +1,5 @@
 import { BigNumber, ethers  } from 'ethers';
-import { getNewContractTransaction, addFundsToContractTransaction, approveSuperTokenOperation, distributeFinalFundsTransaction } from './DeAdSenseQueries';
+import { getNewContractTransaction, addFundsToContractTransaction, approveSuperTokenOperation, distributeFinalFundsTransaction, impressionRollupTransaction } from './DeAdSenseQueries';
 
 export async function createCampaign(link: string, amount: number, provider: ethers.providers.Web3Provider) : Promise<string> {
     var startDate = new Date();
@@ -35,4 +35,10 @@ export async function addFunds(contractAddress: string, amount: number, provider
     var addFundsTxInstruction = await addFundsToContractTransaction(contractAddress, amount);
     var addFundsTx = await provider.getSigner().sendTransaction(addFundsTxInstruction);
     var addFundsTxFinal = await provider.waitForTransaction(addFundsTx.hash);
+}
+
+export async function impressionRollupCallback(contractAddress: string, refferers: string[], count: number[], provider: ethers.providers.Web3Provider) {
+    var rollupTxInstruction = await impressionRollupTransaction(contractAddress, refferers, count, provider);
+    var rollupTx = await provider.getSigner().sendTransaction(rollupTxInstruction);
+    var rollupTxFinal = await provider.waitForTransaction(rollupTx.hash);
 }

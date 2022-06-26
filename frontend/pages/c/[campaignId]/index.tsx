@@ -323,7 +323,7 @@ const Home: NextPage = () => {
               </Grid>
             </Grid>
           )}
-          {address.toLowerCase() !== ownerAddress.toLowerCase() && !linkCreated && (
+          {address?.toLowerCase() !== ownerAddress?.toLowerCase() && !linkCreated && (
             <Grid
               container
               item
@@ -344,7 +344,7 @@ const Home: NextPage = () => {
               </Button>
             </Grid>
           )}
-          {address.toLowerCase() !== ownerAddress.toLowerCase() && linkCreated && (
+          {address?.toLowerCase() !== ownerAddress?.toLowerCase() && linkCreated && (
             <Grid
               container
               item
