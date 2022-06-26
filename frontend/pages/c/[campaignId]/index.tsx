@@ -120,7 +120,7 @@ const Home: NextPage = () => {
       const docSnap = await getDoc(doc(db, "impressionCount", campaignId));
       if (docSnap.exists()) {
         const docData = docSnap.data();
-        setImpressions(docData[address.toLowerCase()].toString() || "0");
+        setImpressions(docData[address?.toLowerCase() ?? ""]?.toString() || "0");
         const newReferData = [];
         for (let [referrerId, impressions] of Object.entries(docData)) {
           newReferData.push({id: referrerId, impressions});
@@ -150,6 +150,13 @@ const Home: NextPage = () => {
     // TODO: fetch data from aws as well
   }, [address]);
 
+  useEffect(() => {
+    if (address == null) return;
+    if (!isCampaignOwner) {
+      setLink(`deAdSense.io/c/${campaignId}/${address}`) 
+    }
+  }, [address, isCampaignOwner, campaignId])
+
   const handleSignOut = () => {
     if (connector) {
       connector.killSession();
@@ -163,9 +170,7 @@ const Home: NextPage = () => {
   };
 
   const handleCreateLink = () => {
-    const link = isCampaignOwner
-      ? `deAdSense.io/c/${campaignId}`
-      : `deAdSense.io/c/${campaignId}/${address}`;
+    const link = `deAdSense.io/c/${campaignId}`
     setLink(link);
     setLinkCreated(true);
   };
@@ -209,6 +214,8 @@ const Home: NextPage = () => {
     );
   };
 
+  const displayLink = link.length > 25 ? `${link.slice(0, 15)}...${link.slice(-10)}` : link
+console.log('displayLink', displayLink)
 
   return (
     <div
@@ -298,7 +305,7 @@ const Home: NextPage = () => {
               </Typography>
             </Grid>
           </Grid>
-          {!linkCreated && (
+          {!linkCreated && isCampaignOwner && (
             <Grid
               container
               item
@@ -334,7 +341,7 @@ const Home: NextPage = () => {
                   <Typography align="left">Campaign link</Typography>
                 </Grid>
                 <Grid item xs={6}>
-                  {/* <Typography align="right">{link}</Typography> */}
+                  <Typography align="right">{displayLink}</Typography>
                 </Grid>
                 <Grid item xs={2}>
                   <CopyButton text={link} />
@@ -395,7 +402,7 @@ const Home: NextPage = () => {
               )}
             </Grid>
           )}
-          {!isCampaignOwner && linkCreated && (
+          {!isCampaignOwner && address && (
             <Grid
               container
               item
@@ -407,10 +414,10 @@ const Home: NextPage = () => {
             >
               <Grid container item alignItems="center" spacing={1}>
                 <Grid item xs={4}>
-                  <Typography align="left">Referral link</Typography>
+                  <Typography align="left">Link to Promote</Typography>
                 </Grid>
                 <Grid item xs={6}>
-                  {/*<Typography align="right">{link}</Typography>*/}
+                  <Typography align="right">{displayLink}</Typography>
                 </Grid>
                 <Grid item xs={2}>
                   <CopyButton text={link} />
