@@ -3,6 +3,7 @@ import Head from "next/head";
 import { Grid, Typography, Backdrop, CircularProgress } from "@mui/material";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import { getLink } from "../../../utils/DeAdSenseQueries";
 
 const RedirectPage: NextPage = () => {
   const router = useRouter();
@@ -14,7 +15,15 @@ const RedirectPage: NextPage = () => {
       // 1. get actual url from campaign id (from smart contract)
       // 2. increment impression for referId (on AWS server)
       // 3. redirect to url
+      console.log(campaignId);
+      let redirectLink = await getLink(campaignId);
+      if (!redirectLink.startsWith("https://") && !redirectLink.startsWith("http://")) {
+        redirectLink = "https://" + redirectLink;
+      }
+      console.log(redirectLink);
+      window.location.replace(redirectLink);
     }
+    if (campaignId && referId) fetchData();
   });
 
   return (
