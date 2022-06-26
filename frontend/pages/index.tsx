@@ -22,13 +22,6 @@ import { collection, addDoc } from "firebase/firestore";
 import * as Firebase from "../clients/Firebase";
 
 const Home: NextPage = () => {
-  useEffect(() => {
-    (async () => {
-      const docs = await Firebase.getDocs("users");
-      console.log("docs", docs);
-    })();
-  }, []);
-
   const router = useRouter();
   const [connector, setConnector] = useState<WalletConnect | null>(null);
   const [provider, setProvider] = useState<ethers.providers.Web3Provider | null>(null);
@@ -79,9 +72,13 @@ const Home: NextPage = () => {
 
   const createCampaignCallback = async () => {
     if(link != "" && amount != "" && provider) {
+      console.log('here')
       var contractAddressTemp = await createCampaign(link, parseInt(amount), provider);
       setContractAddress(contractAddressTemp);
       alert(contractAddressTemp);
+      if (contractAddressTemp != null) {
+        router.push(`/c/${contractAddressTemp}`)
+      }
     }
   }
 

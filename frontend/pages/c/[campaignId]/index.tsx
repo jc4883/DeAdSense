@@ -157,7 +157,7 @@ const Home: NextPage = () => {
   useEffect(() => {
     if (address == null) return;
     if (!isCampaignOwner) {
-      setLink(`deAdSense.io/c/${campaignId}/${address}`) 
+      setLink(`localhost:3000/c/${campaignId}/${address}`) 
     }
   }, [address, isCampaignOwner, campaignId])
 
@@ -174,7 +174,7 @@ const Home: NextPage = () => {
   };
 
   const handleCreateLink = () => {
-    const link = `deAdSense.io/c/${campaignId}`
+    const link = `localhost:3000/c/${campaignId}`
     setLink(link);
     setLinkCreated(true);
   };
