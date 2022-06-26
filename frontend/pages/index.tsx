@@ -15,8 +15,17 @@ import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { useState, useEffect } from "react";
 import WalletConnect from "@walletconnect/client";
 import QRCodeModal from "@walletconnect/qrcode-modal";
+import { collection, addDoc } from "firebase/firestore";
+import * as Firebase from "../clients/Firebase";
 
 const Home: NextPage = () => {
+  useEffect(() => {
+    (async () => {
+      const docs = await Firebase.getDocs("users");
+      console.log("docs", docs);
+    })();
+  }, []);
+
   const router = useRouter();
   const [connector, setConnector] = useState<WalletConnect | null>(null);
   const [address, setAddress] = useState<string>("");

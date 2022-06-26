@@ -3,6 +3,7 @@ import Head from "next/head";
 import { Grid, Typography, Backdrop, CircularProgress } from "@mui/material";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import * as FireBase from "../../../clients/Firebase";
 
 const RedirectPage: NextPage = () => {
   const router = useRouter();
