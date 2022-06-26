@@ -185,7 +185,7 @@ const Home: NextPage = () => {
     return output;
   };
 
-  const saveToChain = async () => {
+  const saveImpressionsToChain = async () => {
     const docSnap = await getDoc(doc(db, "impressionCount", campaignId));
     if (docSnap.exists()) {
       const docData = docSnap.data();
@@ -255,7 +255,7 @@ const Home: NextPage = () => {
   const ZKRollupButton = () => {
     return (
       <Button variant="contained" color="primary">
-        <Typography style={{fontSize: 18}} onClick={saveToChain}>
+        <Typography style={{fontSize: 18}} onClick={saveImpressionsToChain}>
           Save Impressions to Chain
         </Typography>
       </Button>
